@@ -1,21 +1,30 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchCollaborators } from '../api/fetchCollaborators';
 import { useCollaboratorStore } from '../store/collaboratorStore';
-import type { Collaborator } from '../types/types';
+import { useEffect } from 'react';
 
-const Collaborators: React.FC = () => {
+interface Collaborator {
+  id: string;
+  name: string;
+}
+
+const Collaborators = () => {
   const { collaborators, setCollaborators } = useCollaboratorStore();
 
-  const { isLoading, error } = useQuery<Collaborator[], Error, Collaborator[]>({
-    queryKey: ['collaborators'],
+  const { isPending, error, data } = useQuery<Collaborator[], Error>({
+    queryKey: ['collaborators'] as const,
     queryFn: fetchCollaborators,
-    onSuccess: (data: Collaborator[]) => {
-      setCollaborators(data);
-    },
   });
 
-  if (isLoading) return <p>Loading collaborators...</p>;
-  if (error) return <p>Error loading collaborators</p>;
+  // Update the store only when data changes
+  useEffect(() => {
+    if (data) {
+      setCollaborators(data);
+    }
+  }, [data, setCollaborators]);
+
+  if (isPending) return <p>Loading collaborators...</p>;
+  if (error) return <p>Error loading collaborators: {error.message}</p>;
 
   return (
     <div>
